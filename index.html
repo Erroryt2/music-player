@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Music</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="bg"></div>
+    <div class="glow"></div>
+
+    <main class="music-card">
+
+        <!-- COVER -->
+        <div class="cover-container">
+            <img
+                id="cover"
+                src=""
+                alt="Song Cover"
+            >
+        </div>
+
+
+        <!-- SONG INFORMATION -->
+        <div class="song-info">
+
+            <h1 id="songTitle">
+                No Song Added
+            </h1>
+
+            <p id="artist">
+                Add songs to your playlist
+            </p>
+
+        </div>
+
+
+        <!-- MAIN CONTROLS -->
+        <div class="extra-controls">
+
+    <button id="shuffleBtn" class="small-btn" title="Shuffle">
+    ⇄
+    </button>
+
+    <button id="repeatBtn" class="small-btn" title="Repeat">
+    ↻
+     </button>
+
+</div>
+
+<div class="custom-controls">
+
+    <button id="prevBtn" class="control-btn">
+        ⏮
+    </button>
+
+    <button id="playBtn" class="play-btn">
+        ▶
+    </button>
+
+    <button id="nextBtn" class="control-btn">
+        ⏭
+    </button>
+
+        </div>
+
+
+        <!-- PLAYLIST -->
+    
+        <div class="playlist-box">
+
+            <div class="playlist-title">
+
+                <span>PLAYLIST</span>
+
+                <span id="songNumber">
+                    0 / 0
+                </span>
+
+            </div>
+
+                 <div class="playlist-search">
+    <input
+        type="text"
+        id="searchInput"
+        placeholder="Search songs..."
+        autocomplete="off"
+    >
+</div>
+
+            <div id="playlist">
+
+                <div
+                    style="
+                        padding:20px;
+                        text-align:center;
+                        color:#777;
+                    "
+                >
+                    No songs in playlist
+                </div>
+
+            </div>
+
+            
+
+        </div>
+
+
+        <!-- PROGRESS -->
+        <div class="progress-container">
+
+            <span id="currentTime">
+                0:00
+            </span>
+
+            <input
+                type="range"
+                id="progress"
+                min="0"
+                max="100"
+                value="0"
+            >
+
+            <span id="duration">
+                0:00
+            </span>
+
+        </div>
+
+
+        <!-- VOLUME -->
+        <div class="volume-container">
+
+            <span id="volumeIcon">
+                🔊
+            </span>
+
+            <input
+                type="range"
+                id="volume"
+                min="0"
+                max="100"
+                value="80"
+            >
+
+        </div>
+
+        <button id="settingsBtn" class="settings-btn">
+    ⚙ Settings
+        </button>
+
+        <div id="settingsMenu" class="settings-menu">
+
+    <div class="settings-title">
+        ⚙ Settings
+    </div>
+
+    <a href="add-song.html" class="settings-item">
+        ＋ Add Song
+    </a>
+
+    <a
+    href="manage-songs.html"
+    class="settings-item"
+>
+    🗂 Manage Songs
+</a>
+    <button
+        id="closeSettings"
+        class="settings-close"
+    >
+        ✕ Close
+    </button>
+
+</div>
+
+        <div class="youtube-note">
+            MY MUSIC
+        </div>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>

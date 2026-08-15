@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Manage Songs</title>
+
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
+
+</head>
+
+
+<body>
+
+    <div class="bg"></div>
+    <div class="glow"></div>
+
+
+    <main class="manage-music-card">
+
+        <div class="manage-header">
+
+            <h1>
+                Manage Songs
+            </h1>
+
+            <p>
+                Manage your added music
+            </p>
+
+        </div>
+
+
+        <div
+            id="manageSongList"
+            class="manage-song-list"
+        >
+
+            <div class="loading-songs">
+                Loading songs...
+            </div>
+
+        </div>
+
+
+        <a
+            href="add-song.html"
+            class="manage-add-btn"
+        >
+            ＋ Add New Song
+        </a>
+
+
+        <a
+            href="index.html"
+            class="manage-back-btn"
+        >
+            ← Back to Music
+        </a>
+
+    </main>
+
+
+    <script>
+
+        /* =========================
+           ELEMENT
+        ========================= */
+
+        const songList =
+            document.getElementById(
+                "manageSongList"
+            );
+
+
+        /* =========================
+           OPEN DATABASE
+        ========================= */
+
+        const request =
+            indexedDB.open(
+                "MyMusicDB",
+                1
+            );
+
+
+        request.onsuccess =
+            function(event) {
+
+                const db =
+                    event.target.result;
+
+
+                if (
+                    !db.objectStoreNames.contains(
+                        "songs"
+                    )
+                ) {
+
+                    showEmpty();
+
+                    return;
+
+                }
+
+
+                loadSongs(db);
+
+            };
+
+
+        request.onerror =
+            function() {
+
+                songList.innerHTML = `
+                    <div class="empty-songs">
+                        Unable to load songs.
+                    </div>
+                `;
+
+            };
+
+
+        /* =========================
+           LOAD SONGS
+        ========================= */
+
+        function loadSongs(db) {
+
+            const transaction =
+                db.transaction(
+                    ["songs"],
+                    "readonly"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    "songs"
+                );
+
+
+            const getAll =
+                store.getAll();
+
+
+            getAll.onsuccess =
+                function() {
+
+                    const songs =
+                        getAll.result;
+
+
+                    if (
+                        songs.length === 0
+                    ) {
+
+                        showEmpty();
+
+                        return;
+
+                    }
+
+
+                    songList.innerHTML =
+                        "";
+
+
+                    songs.forEach(
+                        (song) => {
+
+                            createSongItem(
+                                db,
+                                song
+                            );
+
+                        }
+                    );
+
+                };
+
+        }
+
+
+        /* =========================
+           CREATE SONG ITEM
+        ========================= */
+
+        function createSongItem(
+            db,
+            song
+        ) {
+
+            const item =
+                document.createElement(
+                    "div"
+                );
+
+
+            item.className =
+                "manage-song-item";
+
+
+            let coverURL =
+                "https://placehold.co/80x80/222222/ffffff?text=Music";
+
+
+            if (
+                song.cover
+            ) {
+
+                coverURL =
+                    URL.createObjectURL(
+                        song.cover
+                    );
+
+            }
+
+
+            item.innerHTML = `
+
+                <img
+                    class="manage-song-cover"
+                    src="${coverURL}"
+                    alt=""
+                >
+
+                <div class="manage-song-info">
+
+                    <strong>
+                        ${escapeHTML(
+                            song.title
+                        )}
+                    </strong>
+
+                    <small>
+                        ${escapeHTML(
+                            song.artist
+                        )}
+                    </small>
+
+                </div>
+
+                <button
+                    class="remove-song-btn"
+                    data-id="${song.id}"
+                >
+                    🗑 Remove
+                </button>
+
+            `;
+
+
+            const removeBtn =
+                item.querySelector(
+                    ".remove-song-btn"
+                );
+
+
+            removeBtn.addEventListener(
+                "click",
+                () => {
+
+                    removeSong(
+                        db,
+                        song.id,
+                        item
+                    );
+
+                }
+            );
+
+
+            songList.appendChild(
+                item
+            );
+
+        }
+
+
+        /* =========================
+           REMOVE SONG
+        ========================= */
+
+        function removeSong(
+            db,
+            songId,
+            item
+        ) {
+
+            const confirmDelete =
+                confirm(
+                    "এই গানটি Playlist থেকে remove করতে চান?"
+                );
+
+
+            if (
+                !confirmDelete
+            ) {
+
+                return;
+
+            }
+
+
+            const transaction =
+                db.transaction(
+                    ["songs"],
+                    "readwrite"
+                );
+
+
+            const store =
+                transaction.objectStore(
+                    "songs"
+                );
+
+
+            store.delete(
+                songId
+            );
+
+
+            transaction.oncomplete =
+                function() {
+
+                    item.remove();
+
+
+                    if (
+                        songList.children
+                            .length === 0
+                    ) {
+
+                        showEmpty();
+
+                    }
+
+                };
+
+        }
+
+
+        /* =========================
+           EMPTY
+        ========================= */
+
+        function showEmpty() {
+
+            songList.innerHTML = `
+
+                <div class="empty-songs">
+
+                    <div class="empty-icon">
+                        🎵
+                    </div>
+
+                    <p>
+                        No added songs
+                    </p>
+
+                    <small>
+                        Add a song from
+                        Add Music
+                    </small>
+
+                </div>
+
+            `;
+
+        }
+
+
+        /* =========================
+           SAFE TEXT
+        ========================= */
+
+        function escapeHTML(
+            text
+        ) {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+            div.textContent =
+                text || "";
+
+            return div.innerHTML;
+
+        }
+
+    </script>
+
+</body>
+
+</html>
