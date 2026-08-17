@@ -906,19 +906,27 @@
            START
         ===================================================== */
 
-        async function start() {
+      async function start() {
 
-            const admin =
-                await checkAdmin();
+    // প্রতিবার Manage Songs page খুললে
+    // আগের Admin session logout হবে
+    await supabaseClient.auth.signOut();
 
+    // নতুন করে Admin Login চাইবে
+    const admin =
+        await checkAdmin();
 
-            if (!admin) {
+    if (!admin) {
 
-                return;
+        return;
 
-            }
+    }
 
+    await loadSongs();
 
+}
+
+start();
             await loadSongs();
 
         }
