@@ -430,14 +430,15 @@ async function adminLogin() {
             "#5cff9d";
 
 
-        setTimeout(
-            function () {
+   setTimeout(
+    function () {
 
-                window.location.reload();
+        window.location.href =
+            "add-song.html";
 
-            },
-            700
-        );
+    },
+    700
+);
 
 
     } catch (error) {
