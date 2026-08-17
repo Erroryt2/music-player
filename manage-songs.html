@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -16,7 +15,6 @@
         rel="stylesheet"
         href="style.css"
     >
-
 </head>
 
 
@@ -35,7 +33,7 @@
             </h1>
 
             <p>
-                Manage your added music
+                Admin can manage added music
             </p>
 
         </div>
@@ -47,7 +45,7 @@
         >
 
             <div class="loading-songs">
-                Loading songs...
+                Checking admin access...
             </div>
 
         </div>
@@ -56,6 +54,8 @@
         <a
             href="add-song.html"
             class="manage-add-btn"
+            id="addSongLink"
+            style="display:none;"
         >
             ＋ Add New Song
         </a>
@@ -71,11 +71,34 @@
     </main>
 
 
+    <!-- SUPABASE -->
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
     <script>
 
-        /* =========================
-           ELEMENT
-        ========================= */
+        /* =====================================================
+           SUPABASE CONFIG
+        ===================================================== */
+
+        const SUPABASE_URL =
+            "https://wbrvmfolvmivdavhwqza.supabase.co";
+
+        const SUPABASE_PUBLISHABLE_KEY =
+            "sb_publishable_WImqKauLjX2vvkrSOnoe_Q_UjiCosQk";
+
+
+        const supabaseClient =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_PUBLISHABLE_KEY
+            );
+
+
+        /* =====================================================
+           ELEMENTS
+        ===================================================== */
 
         const songList =
             document.getElementById(
@@ -83,44 +106,150 @@
             );
 
 
-        /* =========================
-           OPEN DATABASE
-        ========================= */
-
-        const request =
-            indexedDB.open(
-                "MyMusicDB",
-                1
+        const addSongLink =
+            document.getElementById(
+                "addSongLink"
             );
 
 
-        request.onsuccess =
-            function(event) {
+        /* =====================================================
+           CHECK ADMIN
+        ===================================================== */
 
-                const db =
-                    event.target.result;
+        async function checkAdmin() {
+
+            try {
+
+                const {
+                    data: {
+                        session
+                    },
+                    error: sessionError
+                } =
+                    await supabaseClient.auth.getSession();
 
 
-                if (
-                    !db.objectStoreNames.contains(
-                        "songs"
-                    )
-                ) {
+                if (sessionError) {
 
-                    showEmpty();
-
-                    return;
+                    throw sessionError;
 
                 }
 
 
-                loadSongs(db);
+                /* =========================
+                   NOT LOGGED IN
+                ========================= */
 
-            };
+                if (!session) {
+
+                    showAccessDenied(
+                        "Please login as Admin."
+                    );
+
+                    return false;
+
+                }
 
 
-        request.onerror =
-            function() {
+                /* =========================
+                   ADMIN CHECK
+                ========================= */
+
+                const {
+                    data,
+                    error
+                } =
+                    await supabaseClient.rpc(
+                        "is_admin"
+                    );
+
+
+                if (error) {
+
+                    throw error;
+
+                }
+
+
+                if (!data) {
+
+                    showAccessDenied(
+                        "Only Admin can manage songs."
+                    );
+
+                    return false;
+
+                }
+
+
+                /* =========================
+                   ADMIN VERIFIED
+                ========================= */
+
+                addSongLink.style.display =
+                    "block";
+
+
+                return true;
+
+
+            } catch (error) {
+
+                console.error(
+                    "Admin check error:",
+                    error
+                );
+
+
+                showAccessDenied(
+                    "Admin verification failed."
+                );
+
+
+                return false;
+
+            }
+
+        }
+
+
+        /* =====================================================
+           LOAD SONGS FROM SUPABASE
+        ===================================================== */
+
+        async function loadSongs() {
+
+            songList.innerHTML = `
+                <div class="loading-songs">
+                    Loading songs...
+                </div>
+            `;
+
+
+            const {
+                data: songs,
+                error
+            } =
+                await supabaseClient
+                    .from("songs")
+                    .select(
+                        "id,title,artist,audio_url,cover_url,created_at"
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    );
+
+
+            if (error) {
+
+                console.error(
+                    "Load songs error:",
+                    error
+                );
+
 
                 songList.innerHTML = `
                     <div class="empty-songs">
@@ -128,78 +257,44 @@
                     </div>
                 `;
 
-            };
+                return;
+
+            }
 
 
-        /* =========================
-           LOAD SONGS
-        ========================= */
+            if (
+                !songs ||
+                songs.length === 0
+            ) {
 
-        function loadSongs(db) {
+                showEmpty();
 
-            const transaction =
-                db.transaction(
-                    ["songs"],
-                    "readonly"
-                );
+                return;
 
-
-            const store =
-                transaction.objectStore(
-                    "songs"
-                );
+            }
 
 
-            const getAll =
-                store.getAll();
+            songList.innerHTML = "";
 
 
-            getAll.onsuccess =
-                function() {
+            songs.forEach(
+                function(song) {
 
-                    const songs =
-                        getAll.result;
-
-
-                    if (
-                        songs.length === 0
-                    ) {
-
-                        showEmpty();
-
-                        return;
-
-                    }
-
-
-                    songList.innerHTML =
-                        "";
-
-
-                    songs.forEach(
-                        (song) => {
-
-                            createSongItem(
-                                db,
-                                song
-                            );
-
-                        }
+                    createSongItem(
+                        song
                     );
 
-                };
+                }
+            );
 
         }
 
 
-        /* =========================
+        /* =====================================================
            CREATE SONG ITEM
-        ========================= */
+        ===================================================== */
 
-        function createSongItem(
-            db,
-            song
-        ) {
+        function createSongItem(song) {
 
             const item =
                 document.createElement(
@@ -211,29 +306,21 @@
                 "manage-song-item";
 
 
-            let coverURL =
+            const coverURL =
+                song.cover_url ||
                 "https://placehold.co/80x80/222222/ffffff?text=Music";
-
-
-            if (
-                song.cover
-            ) {
-
-                coverURL =
-                    URL.createObjectURL(
-                        song.cover
-                    );
-
-            }
 
 
             item.innerHTML = `
 
                 <img
                     class="manage-song-cover"
-                    src="${coverURL}"
+                    src="${escapeHTML(
+                        coverURL
+                    )}"
                     alt=""
                 >
+
 
                 <div class="manage-song-info">
 
@@ -243,6 +330,7 @@
                         )}
                     </strong>
 
+
                     <small>
                         ${escapeHTML(
                             song.artist
@@ -251,9 +339,10 @@
 
                 </div>
 
+
                 <button
                     class="remove-song-btn"
-                    data-id="${song.id}"
+                    type="button"
                 >
                     🗑 Remove
                 </button>
@@ -269,12 +358,12 @@
 
             removeBtn.addEventListener(
                 "click",
-                () => {
+                function() {
 
                     removeSong(
-                        db,
-                        song.id,
-                        item
+                        song,
+                        item,
+                        removeBtn
                     );
 
                 }
@@ -288,72 +377,328 @@
         }
 
 
-        /* =========================
+        /* =====================================================
            REMOVE SONG
-        ========================= */
+        ===================================================== */
 
-        function removeSong(
-            db,
-            songId,
-            item
+        async function removeSong(
+            song,
+            item,
+            removeBtn
         ) {
+
 
             const confirmDelete =
                 confirm(
-                    "এই গানটি Playlist থেকে remove করতে চান?"
+                    `Delete "${song.title}" permanently?`
                 );
 
 
-            if (
-                !confirmDelete
-            ) {
+            if (!confirmDelete) {
 
                 return;
 
             }
 
 
-            const transaction =
-                db.transaction(
-                    ["songs"],
-                    "readwrite"
-                );
+            try {
+
+                removeBtn.disabled =
+                    true;
 
 
-            const store =
-                transaction.objectStore(
-                    "songs"
-                );
+                removeBtn.textContent =
+                    "Removing...";
 
 
-            store.delete(
-                songId
-            );
+                /* =========================
+                   DOUBLE ADMIN CHECK
+                ========================= */
+
+                const {
+                    data: adminCheck,
+                    error: adminError
+                } =
+                    await supabaseClient.rpc(
+                        "is_admin"
+                    );
 
 
-            transaction.oncomplete =
-                function() {
+                if (adminError) {
 
-                    item.remove();
+                    throw adminError;
+
+                }
 
 
-                    if (
-                        songList.children
-                            .length === 0
-                    ) {
+                if (!adminCheck) {
 
-                        showEmpty();
+                    throw new Error(
+                        "Admin access required."
+                    );
+
+                }
+
+
+                /* =========================
+                   DELETE AUDIO FILE
+                ========================= */
+
+                if (song.audio_url) {
+
+                    const audioPath =
+                        getStoragePath(
+                            song.audio_url
+                        );
+
+
+                    if (audioPath) {
+
+                        const {
+                            error:
+                                audioDeleteError
+                        } =
+                            await supabaseClient
+                                .storage
+                                .from("music")
+                                .remove([
+                                    audioPath
+                                ]);
+
+
+                        if (
+                            audioDeleteError
+                        ) {
+
+                            console.warn(
+                                "Audio file delete warning:",
+                                audioDeleteError
+                            );
+
+                        }
 
                     }
 
-                };
+                }
+
+
+                /* =========================
+                   DELETE COVER FILE
+                ========================= */
+
+                if (song.cover_url) {
+
+                    const coverPath =
+                        getStoragePath(
+                            song.cover_url
+                        );
+
+
+                    if (coverPath) {
+
+                        const {
+                            error:
+                                coverDeleteError
+                        } =
+                            await supabaseClient
+                                .storage
+                                .from("music")
+                                .remove([
+                                    coverPath
+                                ]);
+
+
+                        if (
+                            coverDeleteError
+                        ) {
+
+                            console.warn(
+                                "Cover file delete warning:",
+                                coverDeleteError
+                            );
+
+                        }
+
+                    }
+
+                }
+
+
+                /* =========================
+                   DELETE DATABASE ROW
+                ========================= */
+
+                const {
+                    error:
+                        databaseError
+                } =
+                    await supabaseClient
+                        .from("songs")
+                        .delete()
+                        .eq(
+                            "id",
+                            song.id
+                        );
+
+
+                if (databaseError) {
+
+                    throw databaseError;
+
+                }
+
+
+                /* =========================
+                   REMOVE FROM SCREEN
+                ========================= */
+
+                item.remove();
+
+
+                if (
+                    songList.children
+                        .length === 0
+                ) {
+
+                    showEmpty();
+
+                }
+
+
+                alert(
+                    "✓ Song removed successfully."
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Remove song error:",
+                    error
+                );
+
+
+                alert(
+                    "Song remove করা যায়নি:\n" +
+                    error.message
+                );
+
+
+                removeBtn.disabled =
+                    false;
+
+
+                removeBtn.textContent =
+                    "🗑 Remove";
+
+            }
 
         }
 
 
-        /* =========================
+        /* =====================================================
+           GET STORAGE PATH
+        ===================================================== */
+
+        function getStoragePath(url) {
+
+            try {
+
+                const marker =
+                    "/storage/v1/object/public/music/";
+
+
+                const index =
+                    url.indexOf(
+                        marker
+                    );
+
+
+                if (
+                    index === -1
+                ) {
+
+                    return null;
+
+                }
+
+
+                return decodeURIComponent(
+                    url.substring(
+                        index +
+                        marker.length
+                    )
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Storage path error:",
+                    error
+                );
+
+                return null;
+
+            }
+
+        }
+
+
+        /* =====================================================
+           ACCESS DENIED
+        ===================================================== */
+
+        function showAccessDenied(
+            text
+        ) {
+
+            songList.innerHTML = `
+
+                <div class="empty-songs">
+
+                    <div
+                        class="empty-icon"
+                        style="font-size:45px;"
+                    >
+                        🔒
+                    </div>
+
+
+                    <p>
+                        Access Denied
+                    </p>
+
+
+                    <small>
+                        ${escapeHTML(
+                            text
+                        )}
+                    </small>
+
+
+                    <br><br>
+
+
+                    <a
+                        href="add-song.html"
+                        style="
+                            color:white;
+                            text-decoration:none;
+                        "
+                    >
+                        Go to Admin Login
+                    </a>
+
+                </div>
+
+            `;
+
+        }
+
+
+        /* =====================================================
            EMPTY
-        ========================= */
+        ===================================================== */
 
         function showEmpty() {
 
@@ -366,12 +711,11 @@
                     </div>
 
                     <p>
-                        No added songs
+                        No songs added
                     </p>
 
                     <small>
-                        Add a song from
-                        Add Music
+                        Add songs from Add Music
                     </small>
 
                 </div>
@@ -381,9 +725,9 @@
         }
 
 
-        /* =========================
-           SAFE TEXT
-        ========================= */
+        /* =====================================================
+           ESCAPE HTML
+        ===================================================== */
 
         function escapeHTML(
             text
@@ -394,12 +738,39 @@
                     "div"
                 );
 
+
             div.textContent =
                 text || "";
+
 
             return div.innerHTML;
 
         }
+
+
+        /* =====================================================
+           START
+        ===================================================== */
+
+        async function start() {
+
+            const admin =
+                await checkAdmin();
+
+
+            if (!admin) {
+
+                return;
+
+            }
+
+
+            await loadSongs();
+
+        }
+
+
+        start();
 
     </script>
 
