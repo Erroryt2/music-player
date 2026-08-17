@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -15,6 +16,7 @@
         rel="stylesheet"
         href="style.css"
     >
+
 </head>
 
 
@@ -61,6 +63,26 @@
         </a>
 
 
+        <button
+            id="logoutAdminBtn"
+            type="button"
+            style="
+                display:none;
+                width:100%;
+                margin-top:15px;
+                padding:12px;
+                border:1px solid #4a3540;
+                border-radius:10px;
+                background:#241820;
+                color:white;
+                cursor:pointer;
+                font-weight:bold;
+            "
+        >
+            🚪 Logout Admin
+        </button>
+
+
         <a
             href="index.html"
             class="manage-back-btn"
@@ -85,14 +107,39 @@
         const SUPABASE_URL =
             "https://wbrvmfolvmivdavhwqza.supabase.co";
 
+
         const SUPABASE_PUBLISHABLE_KEY =
             "sb_publishable_WImqKauLjX2vvkrSOnoe_Q_UjiCosQk";
 
 
+        /*
+           IMPORTANT:
+           sessionStorage means the Admin session is kept
+           during the current browser tab/session.
+
+           When the browser session ends, Admin will need
+           to login again.
+        */
+
         const supabaseClient =
             window.supabase.createClient(
                 SUPABASE_URL,
-                SUPABASE_PUBLISHABLE_KEY
+                SUPABASE_PUBLISHABLE_KEY,
+                {
+                    auth: {
+                        storage:
+                            window.sessionStorage,
+
+                        persistSession:
+                            true,
+
+                        autoRefreshToken:
+                            true,
+
+                        detectSessionInUrl:
+                            true
+                    }
+                }
             );
 
 
@@ -112,6 +159,12 @@
             );
 
 
+        const logoutAdminBtn =
+            document.getElementById(
+                "logoutAdminBtn"
+            );
+
+
         /* =====================================================
            CHECK ADMIN
         ===================================================== */
@@ -126,7 +179,9 @@
                     },
                     error: sessionError
                 } =
-                    await supabaseClient.auth.getSession();
+                    await supabaseClient
+                        .auth
+                        .getSession();
 
 
                 if (sessionError) {
@@ -159,9 +214,10 @@
                     data,
                     error
                 } =
-                    await supabaseClient.rpc(
-                        "is_admin"
-                    );
+                    await supabaseClient
+                        .rpc(
+                            "is_admin"
+                        );
 
 
                 if (error) {
@@ -173,9 +229,15 @@
 
                 if (!data) {
 
+                    await supabaseClient
+                        .auth
+                        .signOut();
+
+
                     showAccessDenied(
                         "Only Admin can manage songs."
                     );
+
 
                     return false;
 
@@ -187,6 +249,10 @@
                 ========================= */
 
                 addSongLink.style.display =
+                    "block";
+
+
+                logoutAdminBtn.style.display =
                     "block";
 
 
@@ -238,7 +304,8 @@
                     .order(
                         "created_at",
                         {
-                            ascending: false
+                            ascending:
+                                false
                         }
                     );
 
@@ -254,6 +321,10 @@
                 songList.innerHTML = `
                     <div class="empty-songs">
                         Unable to load songs.
+                        <br><br>
+                        ${escapeHTML(
+                            error.message
+                        )}
                     </div>
                 `;
 
@@ -274,7 +345,8 @@
             }
 
 
-            songList.innerHTML = "";
+            songList.innerHTML =
+                "";
 
 
             songs.forEach(
@@ -294,7 +366,9 @@
            CREATE SONG ITEM
         ===================================================== */
 
-        function createSongItem(song) {
+        function createSongItem(
+            song
+        ) {
 
             const item =
                 document.createElement(
@@ -322,7 +396,9 @@
                 >
 
 
-                <div class="manage-song-info">
+                <div
+                    class="manage-song-info"
+                >
 
                     <strong>
                         ${escapeHTML(
@@ -387,7 +463,6 @@
             removeBtn
         ) {
 
-
             const confirmDelete =
                 confirm(
                     `Delete "${song.title}" permanently?`
@@ -419,9 +494,10 @@
                     data: adminCheck,
                     error: adminError
                 } =
-                    await supabaseClient.rpc(
-                        "is_admin"
-                    );
+                    await supabaseClient
+                        .rpc(
+                            "is_admin"
+                        );
 
 
                 if (adminError) {
@@ -444,7 +520,9 @@
                    DELETE AUDIO FILE
                 ========================= */
 
-                if (song.audio_url) {
+                if (
+                    song.audio_url
+                ) {
 
                     const audioPath =
                         getStoragePath(
@@ -471,7 +549,7 @@
                         ) {
 
                             console.warn(
-                                "Audio file delete warning:",
+                                "Audio delete warning:",
                                 audioDeleteError
                             );
 
@@ -486,7 +564,9 @@
                    DELETE COVER FILE
                 ========================= */
 
-                if (song.cover_url) {
+                if (
+                    song.cover_url
+                ) {
 
                     const coverPath =
                         getStoragePath(
@@ -513,7 +593,7 @@
                         ) {
 
                             console.warn(
-                                "Cover file delete warning:",
+                                "Cover delete warning:",
                                 coverDeleteError
                             );
 
@@ -541,7 +621,9 @@
                         );
 
 
-                if (databaseError) {
+                if (
+                    databaseError
+                ) {
 
                     throw databaseError;
 
@@ -597,10 +679,12 @@
 
 
         /* =====================================================
-           GET STORAGE PATH
+           STORAGE PATH
         ===================================================== */
 
-        function getStoragePath(url) {
+        function getStoragePath(
+            url
+        ) {
 
             try {
 
@@ -630,12 +714,14 @@
                     )
                 );
 
+
             } catch (error) {
 
                 console.error(
                     "Storage path error:",
                     error
                 );
+
 
                 return null;
 
@@ -652,13 +738,25 @@
             text
         ) {
 
+            addSongLink.style.display =
+                "none";
+
+
+            logoutAdminBtn.style.display =
+                "none";
+
+
             songList.innerHTML = `
 
-                <div class="empty-songs">
+                <div
+                    class="empty-songs"
+                >
 
                     <div
                         class="empty-icon"
-                        style="font-size:45px;"
+                        style="
+                            font-size:45px;
+                        "
                     >
                         🔒
                     </div>
@@ -686,7 +784,7 @@
                             text-decoration:none;
                         "
                     >
-                        Go to Admin Login
+                        🔐 Go to Admin Login
                     </a>
 
                 </div>
@@ -704,15 +802,21 @@
 
             songList.innerHTML = `
 
-                <div class="empty-songs">
+                <div
+                    class="empty-songs"
+                >
 
-                    <div class="empty-icon">
+                    <div
+                        class="empty-icon"
+                    >
                         🎵
                     </div>
+
 
                     <p>
                         No songs added
                     </p>
+
 
                     <small>
                         Add songs from Add Music
@@ -746,6 +850,56 @@
             return div.innerHTML;
 
         }
+
+
+        /* =====================================================
+           LOGOUT
+        ===================================================== */
+
+        logoutAdminBtn.addEventListener(
+            "click",
+            async function() {
+
+                const confirmLogout =
+                    confirm(
+                        "Admin logout করতে চান?"
+                    );
+
+
+                if (
+                    !confirmLogout
+                ) {
+
+                    return;
+
+                }
+
+
+                const {
+                    error
+                } =
+                    await supabaseClient
+                        .auth
+                        .signOut();
+
+
+                if (error) {
+
+                    alert(
+                        "Logout failed: " +
+                        error.message
+                    );
+
+                    return;
+
+                }
+
+
+                window.location.href =
+                    "add-song.html";
+
+            }
+        );
 
 
         /* =====================================================
