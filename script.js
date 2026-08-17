@@ -1664,3 +1664,130 @@ loadUserSongs().then(
 
     }
 );
+/* =========================
+   LOAD CLOUD SONGS
+========================= */
+
+async function loadCloudSongs() {
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabaseClient
+            .from("songs")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: true
+                }
+            );
+
+
+        if (error) {
+
+            console.error(
+                "Cloud songs error:",
+                error
+            );
+
+            return;
+
+        }
+
+
+        if (!data || data.length === 0) {
+
+            console.log(
+                "No cloud songs found."
+            );
+
+            return;
+
+        }
+
+
+        data.forEach(
+            function(song) {
+
+                songs.push({
+
+                    id:
+                        "cloud-" +
+                        song.id,
+
+                    title:
+                        song.title,
+
+                    artist:
+                        song.artist,
+
+                    audio:
+                        song.audio_url,
+
+                    cover:
+                        song.cover_url || "",
+
+                    source:
+                        "cloud"
+
+                });
+
+            }
+        );
+
+
+        console.log(
+            `${data.length} cloud songs loaded`
+        );
+
+
+        /*
+         * Playlist update
+         */
+
+        if (
+            typeof renderPlaylist ===
+            "function"
+        ) {
+
+            renderPlaylist();
+
+        }
+
+
+        /*
+         * যদি playlist আগে empty থাকে
+         * তাহলে প্রথম cloud song load করুন
+         */
+
+        if (
+            typeof loadSong ===
+            "function" &&
+            songs.length > 0
+        ) {
+
+            loadSong(currentIndex);
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Cloud loading failed:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================
+   START CLOUD LOAD
+========================= */
+
+loadCloudSongs();
