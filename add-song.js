@@ -12,12 +12,12 @@ const SUPABASE_URL =
     "https://wbrvmfolvmivdavhwqza.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_WImqKauLjX2vvkrSOnoe_Q_UjiCosQk;
+    "sb_publishable_WImqKauljX2vvkrS0noe_Q_UjiCosQk";
 
 const supabaseClient =
     window.supabase.createClient(
-        https://wbrvmfolvmivdavhwqza.supabase.co,
-        sb_publishable_WImqKauLjX2vvkrSOnoe_Q_UjiCosQk
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
     );
 
 
