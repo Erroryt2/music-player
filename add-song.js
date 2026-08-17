@@ -1075,11 +1075,6 @@ document.addEventListener(
     "DOMContentLoaded",
     async function () {
 
-        // প্রতিবার page নতুন করে খুললে
-        // আগের Admin session logout হবে
-        await supabaseClient.auth.signOut();
-
-        // তারপর নতুন করে Admin Login দেখাবে
         await checkAdmin();
 
     }
