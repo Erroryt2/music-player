@@ -1,4 +1,20 @@
 /* =========================
+   SUPABASE CLOUD MUSIC
+========================= */
+
+const SUPABASE_URL =
+    "https://wbrvmfolvmivdavhwqza.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_WImqKauLjX2vvkrSOnoe_Q_UjiCosQk";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+/* =========================
    SONG LIST
 ========================= */
 
