@@ -152,37 +152,44 @@
 
         </div>
 
-        <button
+<!-- SETTINGS -->
+<button
     id="settingsBtn"
     class="settings-btn"
-    onclick="document.getElementById('settingsMenu').classList.toggle('active')"
+    type="button"
 >
     ⚙ Settings
-        </button>
+</button>
 
-        <div id="settingsMenu" class="settings-menu">
+<div id="settingsMenu" class="settings-menu">
 
     <div class="settings-title">
         ⚙ Settings
     </div>
 
-    <a href="add-song.html" class="settings-item">
+    <a
+        href="add-song.html"
+        class="settings-item"
+    >
         ＋ Add Song
     </a>
 
     <a
-    href="manage-songs.html"
-    class="settings-item"
->
-    🗂 Manage Songs
-</a>
-   <button
-    id="closeSettings"
-    class="settings-close"
-    onclick="document.getElementById('settingsMenu').classList.remove('active')"
->
-    ✕ Close
-</button>
+        href="manage-songs.html"
+        class="settings-item"
+    >
+        🗂 Manage Songs
+    </a>
+
+    <button
+        id="closeSettings"
+        class="settings-close"
+        type="button"
+    >
+        ✕ Close
+    </button>
+
+</div>
 
 </div>
 
@@ -193,7 +200,11 @@
     </main>
 
 
-    <script src="script.js"></script>
+    <!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- MUSIC PLAYER -->
+<script src="script.js"></script>
 
 </body>
 
