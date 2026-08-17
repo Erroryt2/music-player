@@ -1,203 +1,110 @@
+/* =========================================================
+   SUPABASE CLOUD MUSIC UPLOAD
+   Multiple Songs + Audio + Cover
+========================================================= */
+
+
 /* =========================
-   MULTIPLE SONG UPLOAD
+   SUPABASE CONFIG
 ========================= */
 
+const SUPABASE_URL =
+    "https://wbrvmfolvmivdavhwqza.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_WImqKauLjX2vvkrSOnoe_Q_UjiCosQk;
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+/* =========================
+   HTML ELEMENTS
+========================= */
 
 const artistInput =
-    document.getElementById(
-        "artistInput"
-    );
-
+    document.getElementById("artistInput");
 
 const audioInput =
-    document.getElementById(
-        "audioInput"
-    );
-
+    document.getElementById("audioInput");
 
 const coverInput =
-    document.getElementById(
-        "coverInput"
-    );
-
+    document.getElementById("coverInput");
 
 const coverPreview =
-    document.getElementById(
-        "coverPreview"
-    );
-
+    document.getElementById("coverPreview");
 
 const selectedCount =
-    document.getElementById(
-        "selectedCount"
-    );
-
+    document.getElementById("selectedCount");
 
 const songList =
-    document.getElementById(
-        "songList"
-    );
-
+    document.getElementById("songList");
 
 const addSongsBtn =
-    document.getElementById(
-        "addSongsBtn"
-    );
-
+    document.getElementById("addSongsBtn");
 
 const progress =
-    document.getElementById(
-        "progress"
-    );
-
+    document.getElementById("progress");
 
 const progressText =
-    document.getElementById(
-        "progressText"
-    );
-
+    document.getElementById("progressText");
 
 const progressFill =
-    document.getElementById(
-        "progressFill"
-    );
-
+    document.getElementById("progressFill");
 
 const message =
-    document.getElementById(
-        "message"
-    );
-
-
-/* =========================
-   DATABASE
-========================= */
-
-
-let db = null;
-
-
-const dbRequest =
-    indexedDB.open(
-        "MyMusicDB",
-        1
-    );
-
-
-dbRequest.onupgradeneeded =
-    function(event) {
-
-        const database =
-            event.target.result;
-
-
-        if (
-            !database
-                .objectStoreNames
-                .contains("songs")
-        ) {
-
-            database.createObjectStore(
-                "songs",
-                {
-                    keyPath: "id",
-                    autoIncrement: true
-                }
-            );
-
-        }
-
-    };
-
-
-dbRequest.onsuccess =
-    function(event) {
-
-        db =
-            event.target.result;
-
-    };
-
-
-dbRequest.onerror =
-    function() {
-
-        showMessage(
-            "Database open হচ্ছে না।",
-            true
-        );
-
-    };
+    document.getElementById("message");
 
 
 /* =========================
    AUDIO FILE SELECT
 ========================= */
 
-
 audioInput.addEventListener(
     "change",
-    function() {
+    function () {
 
         const files =
-            Array.from(
-                audioInput.files
-            );
+            Array.from(audioInput.files);
 
+        songList.innerHTML = "";
 
-        songList.innerHTML =
-            "";
-
-
-        if (
-            files.length === 0
-        ) {
+        if (files.length === 0) {
 
             selectedCount.textContent =
                 "No songs selected";
 
             return;
-
         }
-
 
         selectedCount.textContent =
             `${files.length} songs selected`;
 
-
         files.forEach(
-            function(file, index) {
+            function (file, index) {
 
                 const item =
-                    document.createElement(
-                        "div"
-                    );
-
+                    document.createElement("div");
 
                 item.className =
                     "song-item";
 
-
                 item.innerHTML = `
-
                     <span class="song-number">
                         ${index + 1}
                     </span>
 
                     <span class="song-name">
                         ${escapeHTML(
-                            removeExtension(
-                                file.name
-                            )
+                            removeExtension(file.name)
                         )}
                     </span>
-
                 `;
 
-
-                songList.appendChild(
-                    item
-                );
+                songList.appendChild(item);
 
             }
         );
@@ -210,14 +117,12 @@ audioInput.addEventListener(
    COVER PREVIEW
 ========================= */
 
-
 coverInput.addEventListener(
     "change",
-    function() {
+    function () {
 
         const file =
             coverInput.files[0];
-
 
         if (!file) {
 
@@ -225,15 +130,10 @@ coverInput.addEventListener(
                 "none";
 
             return;
-
         }
 
-
         coverPreview.src =
-            URL.createObjectURL(
-                file
-            );
-
+            URL.createObjectURL(file);
 
         coverPreview.style.display =
             "block";
@@ -246,31 +146,25 @@ coverInput.addEventListener(
    ADD ALL SONGS
 ========================= */
 
-
 addSongsBtn.addEventListener(
     "click",
-    async function() {
+    async function () {
 
         const files =
-            Array.from(
-                audioInput.files
-            );
-
+            Array.from(audioInput.files);
 
         const artist =
             artistInput.value.trim();
 
-
         const coverFile =
-            coverInput.files[0] ||
-            null;
+            coverInput.files[0] || null;
 
 
-        /* Check songs */
+        /* =========================
+           VALIDATION
+        ========================= */
 
-        if (
-            files.length === 0
-        ) {
+        if (files.length === 0) {
 
             showMessage(
                 "কমপক্ষে একটি audio file select করুন।",
@@ -278,11 +172,8 @@ addSongsBtn.addEventListener(
             );
 
             return;
-
         }
 
-
-        /* Check artist */
 
         if (!artist) {
 
@@ -292,52 +183,48 @@ addSongsBtn.addEventListener(
             );
 
             return;
-
         }
 
 
-        /* Check DB */
-
-        if (!db) {
+        if (
+            !SUPABASE_PUBLISHABLE_KEY ||
+            SUPABASE_PUBLISHABLE_KEY ===
+                "PASTE_YOUR_PUBLISHABLE_KEY_HERE"
+        ) {
 
             showMessage(
-                "Database এখনও প্রস্তুত হয়নি। একটু পরে চেষ্টা করুন।",
+                "Supabase Publishable Key সেট করা হয়নি।",
                 true
             );
 
             return;
-
         }
 
 
-        /* Button */
+        /* =========================
+           BUTTON / PROGRESS
+        ========================= */
 
-        addSongsBtn.disabled =
-            true;
-
+        addSongsBtn.disabled = true;
 
         addSongsBtn.textContent =
-            "Adding Songs...";
-
+            "Uploading Songs...";
 
         progress.style.display =
             "block";
-
 
         progressFill.style.width =
             "0%";
 
 
-        let added =
-            0;
+        let added = 0;
 
 
         try {
 
-            /*
-             * প্রতিটি গান আলাদা
-             * IndexedDB transaction-এ save হবে
-             */
+            /* =========================
+               UPLOAD EACH SONG
+            ========================= */
 
             for (
                 let i = 0;
@@ -348,7 +235,6 @@ addSongsBtn.addEventListener(
                 const audioFile =
                     files[i];
 
-
                 const title =
                     removeExtension(
                         audioFile.name
@@ -356,22 +242,181 @@ addSongsBtn.addEventListener(
 
 
                 progressText.textContent =
-                    `Adding ${i + 1} / ${files.length}`;
+                    `Uploading ${i + 1} / ${files.length}`;
 
 
                 progressFill.style.width =
                     `${(
-                        (i + 1) /
-                        files.length
-                    ) * 100}%`;
+                        (i / files.length) * 100
+                    )}%`;
 
 
-                await saveSong(
-                    title,
-                    artist,
-                    audioFile,
-                    coverFile
-                );
+                /* =========================
+                   UNIQUE AUDIO FILE NAME
+                ========================= */
+
+                const audioPath =
+                    createSafeFileName(
+                        audioFile.name
+                    );
+
+
+                /* =========================
+                   UPLOAD AUDIO
+                ========================= */
+
+                const {
+                    error: audioUploadError
+                } =
+                    await supabaseClient
+                        .storage
+                        .from("music")
+                        .upload(
+                            audioPath,
+                            audioFile,
+                            {
+                                cacheControl:
+                                    "3600",
+
+                                upsert:
+                                    false,
+
+                                contentType:
+                                    audioFile.type ||
+                                    "audio/mpeg"
+                            }
+                        );
+
+
+                if (audioUploadError) {
+
+                    throw new Error(
+                        "Audio upload failed: " +
+                        audioUploadError.message
+                    );
+                }
+
+
+                /* =========================
+                   AUDIO PUBLIC URL
+                ========================= */
+
+                const {
+                    data:
+                    audioPublicData
+                } =
+                    supabaseClient
+                        .storage
+                        .from("music")
+                        .getPublicUrl(
+                            audioPath
+                        );
+
+
+                const audioUrl =
+                    audioPublicData.publicUrl;
+
+
+                /* =========================
+                   COVER UPLOAD
+                ========================= */
+
+                let coverUrl = "";
+
+
+                if (coverFile) {
+
+                    const coverPath =
+                        createSafeFileName(
+                            coverFile.name
+                        );
+
+
+                    const {
+                        error:
+                        coverUploadError
+                    } =
+                        await supabaseClient
+                            .storage
+                            .from("music")
+                            .upload(
+                                coverPath,
+                                coverFile,
+                                {
+                                    cacheControl:
+                                        "3600",
+
+                                    upsert:
+                                        false,
+
+                                    contentType:
+                                        coverFile.type ||
+                                        "image/jpeg"
+                                }
+                            );
+
+
+                    if (coverUploadError) {
+
+                        throw new Error(
+                            "Cover upload failed: " +
+                            coverUploadError.message
+                        );
+                    }
+
+
+                    const {
+                        data:
+                        coverPublicData
+                    } =
+                        supabaseClient
+                            .storage
+                            .from("music")
+                            .getPublicUrl(
+                                coverPath
+                            );
+
+
+                    coverUrl =
+                        coverPublicData.publicUrl;
+
+                }
+
+
+                /* =========================
+                   SAVE SONG IN DATABASE
+                ========================= */
+
+                const {
+                    error:
+                    databaseError
+                } =
+                    await supabaseClient
+                        .from("songs")
+                        .insert([
+                            {
+                                title:
+                                    title,
+
+                                artist:
+                                    artist,
+
+                                audio_url:
+                                    audioUrl,
+
+                                cover_url:
+                                    coverUrl
+                            }
+                        ]);
+
+
+                if (databaseError) {
+
+                    throw new Error(
+                        "Database save failed: " +
+                        databaseError.message
+                    );
+                }
 
 
                 added++;
@@ -379,74 +424,72 @@ addSongsBtn.addEventListener(
             }
 
 
-            /* Success */
+            /* =========================
+               SUCCESS
+            ========================= */
 
             progressText.textContent =
-                `${added} / ${files.length} songs added`;
-
+                `${added} / ${files.length} songs uploaded`;
 
             progressFill.style.width =
                 "100%";
 
 
             showMessage(
-                `✓ ${added} songs successfully added!`,
+                `✓ ${added} songs successfully uploaded to cloud!`,
                 false
             );
 
 
-            /* Clear */
+            /* =========================
+               CLEAR FORM
+            ========================= */
 
             artistInput.value =
                 "";
 
-
             audioInput.value =
                 "";
-
 
             coverInput.value =
                 "";
 
-
             songList.innerHTML =
                 "";
 
-
             selectedCount.textContent =
                 "No songs selected";
-
 
             coverPreview.style.display =
                 "none";
 
 
             /*
-             * Player-এ ফেরত
-             * যাওয়ার জন্য একটু delay
+             * Player page-এ ফেরত
              */
 
             setTimeout(
-                function() {
+                function () {
 
                     window.location.href =
                         "index.html";
 
                 },
-                1200
+                1500
             );
 
 
-        } catch(error) {
+        } catch (error) {
 
             console.error(
-                "Add songs error:",
+                "Cloud upload error:",
                 error
             );
 
 
             showMessage(
-                "কিছু গান save করা যায়নি।",
+                "গান upload করা যায়নি: " +
+                error.message,
                 true
             );
 
@@ -456,7 +499,6 @@ addSongsBtn.addEventListener(
         addSongsBtn.disabled =
             false;
 
-
         addSongsBtn.textContent =
             "＋ Add All Songs";
 
@@ -465,88 +507,38 @@ addSongsBtn.addEventListener(
 
 
 /* =========================
-   SAVE ONE SONG
+   CREATE UNIQUE FILE NAME
 ========================= */
 
-
-function saveSong(
-    title,
-    artist,
-    audioFile,
-    coverFile
+function createSafeFileName(
+    originalName
 ) {
 
-    return new Promise(
-        function(
-            resolve,
-            reject
-        ) {
+    const extension =
+        originalName.includes(".")
+            ? originalName
+                .substring(
+                    originalName
+                        .lastIndexOf(".")
+                )
+                .toLowerCase()
+            : "";
 
-            const transaction =
-                db.transaction(
-                    ["songs"],
-                    "readwrite"
-                );
+    const randomPart =
+        crypto.randomUUID();
 
-
-            const store =
-                transaction.objectStore(
-                    "songs"
-                );
-
-
-            const song = {
-
-                title:
-                    title,
-
-                artist:
-                    artist,
-
-                audio:
-                    audioFile,
-
-                cover:
-                    coverFile,
-
-                addedAt:
-                    Date.now()
-
-            };
-
-
-            store.add(
-                song
-            );
-
-
-            transaction.oncomplete =
-                function() {
-
-                    resolve();
-
-                };
-
-
-            transaction.onerror =
-                function() {
-
-                    reject(
-                        transaction.error
-                    );
-
-                };
-
-        }
+    return (
+        Date.now() +
+        "_" +
+        randomPart +
+        extension
     );
-
 }
 
 
 /* =========================
    REMOVE EXTENSION
 ========================= */
-
 
 function removeExtension(
     filename
@@ -564,20 +556,15 @@ function removeExtension(
    ESCAPE HTML
 ========================= */
 
-
 function escapeHTML(
     text
 ) {
 
     const div =
-        document.createElement(
-            "div"
-        );
-
+        document.createElement("div");
 
     div.textContent =
         text;
-
 
     return div.innerHTML;
 
@@ -588,7 +575,6 @@ function escapeHTML(
    MESSAGE
 ========================= */
 
-
 function showMessage(
     text,
     error
@@ -596,7 +582,6 @@ function showMessage(
 
     message.textContent =
         text;
-
 
     message.className =
         error
